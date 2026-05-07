@@ -96,7 +96,7 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
             <div class="product-name">${escapeHtml(item.Product_Name)}</div>
             <div class="sku-id">${escapeHtml(item.SKU_ID)}</div>
             ${barcodeDataUrl ? `<img src="${barcodeDataUrl}" alt="barcode" class="barcode-img" />` : `<div class="barcode-fallback">${escapeHtml(item.Barcode_Value)}</div>`}
-            <div class="price">$${item.Price.toFixed(2)}</div>
+            <div class="price">MYR ${item.Price.toFixed(2)}</div>
           </div>
         `;
       }).join("");
@@ -325,7 +325,7 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
                     )
                   ))}
 
-                  <p className={styles.labelPrice}>${items[currentIndex]?.Price.toFixed(2)}</p>
+                  <p className={styles.labelPrice}>MYR {items[currentIndex]?.Price.toFixed(2)}</p>
                 </>
               )}
             </div>

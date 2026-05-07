@@ -47,7 +47,7 @@ export default function Header({ activeTab }: HeaderProps) {
 
         <div className={styles.stat} id="header-inventory-value">
           <span className={styles.statValue}>
-            ${totalValue >= 1000
+            MYR {totalValue >= 1000
               ? (totalValue / 1000).toFixed(1) + "k"
               : totalValue.toFixed(0)}
           </span>

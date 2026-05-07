@@ -146,7 +146,7 @@ export default function BarcodeGenerator() {
                   </span>
                   <span className={styles.skuDetail}>
                     <span className={styles.skuDetailLabel}>Price:</span>
-                    <span className={styles.skuDetailValue}>${selectedItem.Price.toFixed(2)}</span>
+                    <span className={styles.skuDetailValue}>MYR {selectedItem.Price.toFixed(2)}</span>
                   </span>
                 </div>
               )}
