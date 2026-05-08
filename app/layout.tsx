@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Kim Loong Co. Shdn Bhd",
   description: "Professional retail inventory management with SKU tracking, barcode generation, and bulk printing capabilities.",
   keywords: "inventory management, SKU, barcode, retail, stock management",
+  icons: {
+    icon: "/KimLoong_logo.png",
+  },
 };
 
 export default function RootLayout({
