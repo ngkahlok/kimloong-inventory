@@ -1,7 +1,5 @@
-import Dashboard from "@/components/Dashboard/Dashboard";
-import { createClient } from '@/utils/supabase/server';
-import { cookies } from 'next/headers';
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return <Dashboard />;
+export default function RootPage() {
+  redirect("/inventory");
 }
