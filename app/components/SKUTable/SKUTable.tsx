@@ -22,6 +22,8 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
   const {
     filteredItems,
     items,
+    isLoading,
+    refreshItems,
     filter,
     setFilter,
     categories,
@@ -76,6 +78,16 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
 
   const allSelected = filteredItems.length > 0 && filteredItems.every((i) => i.selected);
   const someSelected = filteredItems.some((i) => i.selected);
+
+  if (isLoading) {
+    return (
+      <div className={styles.emptyState}>
+        <div className={styles.loaderSpinner} />
+        <h3 className={styles.emptyTitle}>Loading Inventory...</h3>
+        <p className={styles.emptySubtitle}>Connecting to Supabase database.</p>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -248,13 +260,13 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
               </tr>
             ) : (
               filteredItems.map((item) => (
-                <tr key={item.id} className={`${styles.row} ${item.selected ? styles.rowSelected : ""}`}>
+                <tr key={item.SKU_ID} className={`${styles.row} ${item.selected ? styles.rowSelected : ""}`}>
                   <td className={styles.checkboxCell}>
                     <input
                       type="checkbox"
-                      id={`select-${item.id}`}
+                      id={`select-${item.SKU_ID}`}
                       checked={!!item.selected}
-                      onChange={() => toggleSelect(item.id)}
+                      onChange={() => toggleSelect(item.SKU_ID)}
                       className={styles.checkbox}
                       aria-label={`Select ${item.Product_Name}`}
                     />
@@ -265,7 +277,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                   </td>
 
                   <td>
-                    {editingCell?.id === item.id && editingCell.field === "Product_Name" ? (
+                    {editingCell?.id === item.SKU_ID && editingCell?.field === "Product_Name" ? (
                       <input
                         autoFocus
                         className={styles.inlineInput}
@@ -277,7 +289,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                     ) : (
                       <span
                         className={styles.editableCell}
-                        onClick={() => startEdit(item.id, "Product_Name", item.Product_Name)}
+                        onClick={() => startEdit(item.SKU_ID, "Product_Name", item.Product_Name)}
                         title="Click to edit"
                       >
                         {item.Product_Name}
@@ -290,7 +302,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                   </td>
 
                   <td>
-                    {editingCell?.id === item.id && editingCell.field === "Category" ? (
+                    {editingCell?.id === item.SKU_ID && editingCell?.field === "Category" ? (
                       <input
                         autoFocus
                         className={styles.inlineInput}
@@ -302,7 +314,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                     ) : (
                       <span
                         className={`${styles.editableCell} ${styles.categoryChip}`}
-                        onClick={() => startEdit(item.id, "Category", item.Category)}
+                        onClick={() => startEdit(item.SKU_ID, "Category", item.Category)}
                         title="Click to edit"
                       >
                         {item.Category}
@@ -311,7 +323,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                   </td>
 
                   <td>
-                    {editingCell?.id === item.id && editingCell.field === "Stock_Level" ? (
+                    {editingCell?.id === item.SKU_ID && editingCell?.field === "Stock_Level" ? (
                       <input
                         autoFocus
                         type="number"
@@ -325,7 +337,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                     ) : (
                       <span
                         className={`${styles.editableCell} ${styles.stockValue} ${getStockStatus(item.Stock_Level) === "low_stock" ? styles.stockLow : getStockStatus(item.Stock_Level) === "out_of_stock" ? styles.stockOut : ""}`}
-                        onClick={() => startEdit(item.id, "Stock_Level", item.Stock_Level)}
+                        onClick={() => startEdit(item.SKU_ID, "Stock_Level", item.Stock_Level)}
                         title="Click to edit"
                       >
                         {item.Stock_Level.toLocaleString()}
@@ -340,7 +352,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                   <td>{stockStatusBadge(item.Stock_Level)}</td>
 
                   <td>
-                    {editingCell?.id === item.id && editingCell.field === "Price" ? (
+                    {editingCell?.id === item.SKU_ID && editingCell?.field === "Price" ? (
                       <input
                         autoFocus
                         type="number"
@@ -355,7 +367,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                     ) : (
                       <span
                         className={`${styles.editableCell} ${styles.priceValue}`}
-                        onClick={() => startEdit(item.id, "Price", item.Price)}
+                        onClick={() => startEdit(item.SKU_ID, "Price", item.Price)}
                         title="Click to edit"
                       >
                         MYR {item.Price.toFixed(2)}
@@ -376,7 +388,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                   <td className={styles.actionsCell}>
                     <div className={styles.actions}>
                       <button
-                        id={`print-btn-${item.id}`}
+                        id={`print-btn-${item.SKU_ID}`}
                         className={styles.printBtn}
                         onClick={() => onPrintItem(item)}
                         title="Print barcode label"
@@ -389,9 +401,9 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                         Print
                       </button>
                       <button
-                        id={`delete-btn-${item.id}`}
+                        id={`delete-btn-${item.SKU_ID}`}
                         className={styles.deleteBtn}
-                        onClick={() => deleteItem(item.id)}
+                        onClick={() => deleteItem(item.SKU_ID)}
                         title="Delete item"
                         aria-label={`Delete ${item.Product_Name}`}
                       >

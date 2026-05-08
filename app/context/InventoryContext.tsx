@@ -1,10 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
 import { InventoryItem, FilterState, StockStatus, getStockStatus } from "@/types/inventory";
+import { createClient } from "@/utils/supabase/client";
 
 interface InventoryContextType {
   items: InventoryItem[];
+  isLoading: boolean;
+  refreshItems: () => Promise<void>;
   setItems: (items: InventoryItem[]) => void;
   addItems: (newItems: InventoryItem[]) => void;
   updateItem: (id: string, updates: Partial<InventoryItem>) => void;
@@ -22,42 +25,97 @@ const InventoryContext = createContext<InventoryContextType | null>(null);
 
 export function InventoryProvider({ children }: { children: ReactNode }) {
   const [items, setItemsState] = useState<InventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilterState] = useState<FilterState>({
     search: "",
     category: "all",
     stockStatus: "all",
   });
 
+  const supabase = createClient();
+
+  const refreshItems = useCallback(async () => {
+    setIsLoading(true);
+    console.log("Fetching items from Supabase...");
+    try {
+      const { data, error } = await supabase
+        .from("inventory")
+        .select("*")
+        .order("SKU_ID", { ascending: true });
+
+      if (error) {
+        console.error("Supabase Error:", error.message, error.details, error.hint);
+        throw error;
+      }
+
+      console.log("Data received:", data);
+      setItemsState((data || []).map(item => ({ ...item, selected: false })));
+    } catch (error) {
+      console.error("Critical error in refreshItems:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    refreshItems();
+  }, [refreshItems]);
+
   const setItems = useCallback((newItems: InventoryItem[]) => {
     setItemsState(newItems.map((item) => ({ ...item, selected: false })));
   }, []);
 
-  const addItems = useCallback((newItems: InventoryItem[]) => {
-    setItemsState((prev) => {
-      const existingIds = new Set(prev.map((i) => i.SKU_ID));
-      const merged = [...prev];
-      for (const item of newItems) {
-        if (existingIds.has(item.SKU_ID)) {
-          // Update existing
-          const idx = merged.findIndex((i) => i.SKU_ID === item.SKU_ID);
-          if (idx !== -1) merged[idx] = { ...merged[idx], ...item };
-        } else {
-          merged.push({ ...item, selected: false });
-        }
-      }
-      return merged;
-    });
-  }, []);
+  const addItems = useCallback(async (newItems: InventoryItem[]) => {
+    try {
+      // 1. Prepare data for Supabase (remove the 'selected' UI state)
+      const itemsToUpload = newItems.map(({ selected, ...rest }) => rest);
 
-  const updateItem = useCallback((id: string, updates: Partial<InventoryItem>) => {
-    setItemsState((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
-    );
-  }, []);
+      const { error } = await supabase
+        .from("inventory")
+        .upsert(itemsToUpload, { onConflict: "SKU_ID" });
 
-  const deleteItem = useCallback((id: string) => {
-    setItemsState((prev) => prev.filter((item) => item.id !== id));
-  }, []);
+      if (error) throw error;
+
+      // 2. Refresh local state from DB to ensure sync
+      await refreshItems();
+    } catch (error) {
+      console.error("Error adding items to Supabase:", error);
+      alert("Failed to save items to database.");
+    }
+  }, [supabase, refreshItems]);
+
+  const updateItem = useCallback(async (id: string, updates: Partial<InventoryItem>) => {
+    try {
+      // Remove selected from updates if it exists
+      const { selected, ...dbUpdates } = updates as any;
+
+      const { error } = await supabase
+        .from("inventory")
+        .update(dbUpdates)
+        .eq("SKU_ID", id);
+
+      if (error) throw error;
+
+      await refreshItems();
+    } catch (error) {
+      console.error("Error updating item in Supabase:", error);
+    }
+  }, [supabase, refreshItems]);
+
+  const deleteItem = useCallback(async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("inventory")
+        .delete()
+        .eq("SKU_ID", id);
+
+      if (error) throw error;
+
+      await refreshItems();
+    } catch (error) {
+      console.error("Error deleting item from Supabase:", error);
+    }
+  }, [supabase, refreshItems]);
 
   const toggleSelect = useCallback((id: string) => {
     setItemsState((prev) =>
@@ -99,12 +157,14 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     return matchesSearch && matchesCategory && matchesStock;
   });
 
-  const selectedItems = items.filter((i) => i.selected);
+  const selectedItems = items.filter((item) => item.selected);
 
   return (
     <InventoryContext.Provider
       value={{
         items,
+        isLoading,
+        refreshItems,
         setItems,
         addItems,
         updateItem,
