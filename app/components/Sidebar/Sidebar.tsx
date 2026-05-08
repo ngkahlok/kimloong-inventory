@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import styles from "./Sidebar.module.css";
 
 interface SidebarProps {
@@ -51,16 +52,18 @@ export default function Sidebar({ activeTab, onTabChange, itemCount, selectedCou
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
-        <div className={styles.brandIcon}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
+        <div className={styles.brandLogowrapper}>
+          <Image
+            src="/KimLoong_Logo(White-BG).png"
+            alt="Kim Loong Logo"
+            width={60}
+            height={64}
+            className={styles.brandLogo}
+          />
         </div>
         <div className={styles.brandText}>
-          <span className={styles.brandName}>InvenTrack</span>
-          <span className={styles.brandTagline}>Command Center</span>
+          <span className={styles.brandName}>Kim Loong Co.</span>
+          <span className={styles.brandTagline}>Admin Dashboard</span>
         </div>
       </div>
 

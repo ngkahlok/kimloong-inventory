@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kim Loong Co. Shdn Bhd",
+  title: "Kim Loong Co. Shd Bhd",
   description: "Professional retail inventory management with SKU tracking, barcode generation, and bulk printing capabilities.",
   keywords: "inventory management, SKU, barcode, retail, stock management",
   icons: {
-    icon: "/KimLoong_logo.png",
+    icon: [
+      { url: "/KimLoong_Logo(White-BG).png" },
+      { url: "/KimLoong_Logo(White-BG).png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/KimLoong_Logo(White-BG).png",
   },
 };
 
