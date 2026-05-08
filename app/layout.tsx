@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Retail Inventory Command Center",
+  title: "Kim Loong Co. Shdn Bhd",
   description: "Professional retail inventory management with SKU tracking, barcode generation, and bulk printing capabilities.",
   keywords: "inventory management, SKU, barcode, retail, stock management",
 };

@@ -1,4 +1,4 @@
-# 📦 KimLoong Inventory — Retail Inventory Command Center
+# 📦 Kim Loong Co. Admin Dashbaord
 
 A web-based inventory management dashboard built for retail operations. Upload product data, manage stock levels, generate barcodes, and print labels — all in one place.
 
