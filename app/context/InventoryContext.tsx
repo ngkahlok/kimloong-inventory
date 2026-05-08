@@ -120,7 +120,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const toggleSelect = useCallback((id: string) => {
     setItemsState((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, selected: !item.selected } : item
+        item.SKU_ID === id ? { ...item, selected: !item.selected } : item
       )
     );
   }, []);
@@ -142,10 +142,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     const searchLower = filter.search.toLowerCase();
     const matchesSearch =
       !filter.search ||
-      item.SKU_ID.toLowerCase().includes(searchLower) ||
-      item.Product_Name.toLowerCase().includes(searchLower) ||
-      item.Category.toLowerCase().includes(searchLower) ||
-      item.Barcode_Value.toLowerCase().includes(searchLower);
+      String(item.SKU_ID || "").toLowerCase().includes(searchLower) ||
+      String(item.Product_Name || "").toLowerCase().includes(searchLower) ||
+      String(item.Category || "").toLowerCase().includes(searchLower) ||
+      String(item.Barcode_Value || "").toLowerCase().includes(searchLower);
 
     const matchesCategory =
       filter.category === "all" || item.Category === filter.category;
