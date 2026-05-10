@@ -72,12 +72,13 @@ When uploading a `.csv` or `.xlsx` file, include these column headers (case-inse
 
 | Column | Description | Example |
 |---|---|---|
-| `SKU_ID` | Unique product code | `SKU-1001` |
-| `Product_Name` | Product display name | `Wireless Earbuds Pro` |
+| `ID` | Unique numeric identifier | `1001` |
+| `Item Code` | Unique product code | `SKU-1001` |
+| `Item` | Product display name | `Wireless Earbuds Pro` |
 | `Category` | Product category | `Electronics` |
-| `Stock_Level` | Quantity in stock | `50` |
+| `UOM` | Unit of measure | `PCS` |
+| `Cost` | Unit purchase cost | `15.00` |
 | `Price` | Unit selling price | `29.99` |
-| `Barcode_Value` | Barcode number (Code 128 or EAN-13) | `9781234567897` |
 
 > **Tip:** Don't have a file ready? Click **"Load Sample Data"** on the Data Ingestion page to populate 12 demo products instantly.
 

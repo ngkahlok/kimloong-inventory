@@ -107,7 +107,7 @@ export default function FileUpload() {
 
       <div className={styles.schemaInfo}>
         <span className={styles.schemaTitle}>Expected Schema:</span>
-        {["SKU_ID", "Product_Name", "Category", "Stock_Level", "Price", "Barcode_Value"].map((col) => (
+        {["ID", "Item Code", "Item", "Category", "UOM", "Cost", "Price"].map((col) => (
           <span key={col} className={styles.schemaTag}>{col}</span>
         ))}
       </div>
@@ -187,9 +187,9 @@ export default function FileUpload() {
         <h3 className={styles.instructionTitle}>File Format Guidelines</h3>
         <ul className={styles.instructionList}>
           <li>First row must contain column headers</li>
-          <li>Column names are case-insensitive (e.g., "SKU_ID", "sku id", "SKUID" all work)</li>
-          <li>Duplicate SKU_IDs will update existing records</li>
-          <li>Missing Price or Stock_Level defaults to 0</li>
+          <li>Column names are case-insensitive (e.g., "Item Code", "sku", "Price" all work)</li>
+          <li>Duplicate IDs will update existing records</li>
+          <li>Missing Price or Cost defaults to 0</li>
         </ul>
       </div>
     </div>

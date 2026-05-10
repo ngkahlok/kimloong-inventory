@@ -94,9 +94,17 @@ export function generateSampleData(): InventoryItem[] {
 }
 
 export function exportToCSV(items: InventoryItem[]): void {
-  const headers = ["SKU_ID", "Product_Name", "Category", "Stock_Level", "Price", "Barcode_Value"];
+  const headers = ["ID", "Item Code", "Item", "Category", "UOM", "Cost", "Price"];
   const rows = items.map((item) =>
-    [item.SKU_ID, item.Product_Name, item.Category, item.Stock_Level, item.Price, item.Barcode_Value].join(",")
+    [
+      item.ID,
+      `"${item["Item Code"] || ""}"`,
+      `"${item.Item || ""}"`,
+      `"${item.Category || ""}"`,
+      `"${item.UOM || ""}"`,
+      item.Cost || 0,
+      item.Price || 0,
+    ].join(",")
   );
   const csv = [headers.join(","), ...rows].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });

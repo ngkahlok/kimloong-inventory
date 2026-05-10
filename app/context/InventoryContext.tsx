@@ -1,14 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
-import { InventoryItem, FilterState, StockStatus, getStockStatus } from "@/types/inventory";
+import { InventoryItem, FilterState } from "@/types/inventory";
 import { createClient } from "@/utils/supabase/client";
-
-interface EditingCell {
-  id: number;
-  field: keyof InventoryItem;
-  value: string;
-}
 
 interface InventoryContextType {
   items: InventoryItem[];
@@ -74,7 +68,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const addItems = useCallback(async (newItems: InventoryItem[]) => {
     try {
       // 1. Prepare data for Supabase (remove the 'selected' UI state)
-      const itemsToUpload = newItems.map(({ selected, ...rest }) => rest);
+      const itemsToUpload = newItems.map(({ selected: _, ...rest }) => rest);
 
       const { error } = await supabase
         .from("sku")
@@ -92,8 +86,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
 
   const updateItem = useCallback(async (id: number, updates: Partial<InventoryItem>) => {
     try {
-      // Remove selected from updates if it exists
-      const { selected, ...dbUpdates } = updates as any;
+      // Remove UI-only 'selected' field and ensure specific typing for Supabase
+      const { selected: _, ...dbUpdates } = updates;
 
       const { error } = await supabase
         .from("sku")
