@@ -5,11 +5,12 @@ import { useInventory } from "@/context/InventoryContext";
 import { InventoryItem, getStockStatus, STOCK_THRESHOLDS } from "@/types/inventory";
 import { exportToCSV } from "@/lib/fileParser";
 import { exportAllBarcodesA4 } from "@/lib/barcodeExport";
+import EditItemModal from "./EditItemModal";
 import styles from "./SKUTable.module.css";
 
 interface EditingCell {
   id: string;
-  field: "Stock_Level" | "Price" | "Product_Name" | "Category";
+  field: "Stock_Level" | "Price" | "Product_Name" | "Category" | "SKU_ID" | "Barcode_Value";
   value: string;
 }
 
@@ -35,6 +36,7 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
   } = useInventory();
 
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [exportingA4, setExportingA4] = useState<"idle" | "loading" | "done">("idle");
   const a4IframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -61,6 +63,8 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
     let parsed: string | number = value;
     if (field === "Stock_Level") parsed = Math.max(0, Math.round(parseFloat(value) || 0));
     if (field === "Price") parsed = Math.max(0, parseFloat(value) || 0);
+
+    // Optimistic update
     updateItem(id, { [field]: parsed });
     setEditingCell(null);
   }, [editingCell, updateItem]);
@@ -161,6 +165,26 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
           <span className={styles.countLabel}>
             {filteredItems.length} / {items.length} items
           </span>
+
+          <button
+            id="add-sku-btn"
+            className={styles.addBtn}
+            onClick={() => setEditingItem({
+              SKU_ID: "",
+              Product_Name: "",
+              Category: "",
+              Stock_Level: 0,
+              Price: 0,
+              Barcode_Value: "",
+              selected: false
+            } as any)}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add SKU
+          </button>
 
           {selectedItems.length > 0 && (
             <button
@@ -273,7 +297,28 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                   </td>
 
                   <td>
-                    <span className={styles.skuId}>{item.SKU_ID}</span>
+                    {editingCell?.id === item.SKU_ID && editingCell?.field === "SKU_ID" ? (
+                      <input
+                        autoFocus
+                        className={styles.inlineInput}
+                        value={editingCell.value}
+                        onChange={(e) => setEditingCell({ ...editingCell, value: e.target.value })}
+                        onBlur={commitEdit}
+                        onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") cancelEdit(); }}
+                      />
+                    ) : (
+                      <span
+                        className={styles.editableCell}
+                        onClick={() => startEdit(item.SKU_ID, "SKU_ID", item.SKU_ID)}
+                        title="Click to edit SKU"
+                      >
+                        {item.SKU_ID}
+                        <svg className={styles.editPencil} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </span>
+                    )}
                   </td>
 
                   <td>
@@ -380,9 +425,28 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                   </td>
 
                   <td>
-                    <span className={styles.barcodeValue} title={item.Barcode_Value}>
-                      {item.Barcode_Value}
-                    </span>
+                    {editingCell?.id === item.SKU_ID && editingCell?.field === "Barcode_Value" ? (
+                      <input
+                        autoFocus
+                        className={styles.inlineInput}
+                        value={editingCell.value}
+                        onChange={(e) => setEditingCell({ ...editingCell, value: e.target.value })}
+                        onBlur={commitEdit}
+                        onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") cancelEdit(); }}
+                      />
+                    ) : (
+                      <span
+                        className={styles.editableCell}
+                        onClick={() => startEdit(item.SKU_ID, "Barcode_Value", item.Barcode_Value)}
+                        title="Click to edit barcode"
+                      >
+                        {item.Barcode_Value}
+                        <svg className={styles.editPencil} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </span>
+                    )}
                   </td>
 
                   <td className={styles.actionsCell}>
@@ -398,7 +462,16 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
                           <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                           <rect x="6" y="14" width="12" height="8" />
                         </svg>
-                        Print
+                      </button>
+                      <button
+                        className={styles.editBtn}
+                        onClick={() => setEditingItem(item)}
+                        title="Edit item details"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
                       </button>
                       <button
                         id={`delete-btn-${item.SKU_ID}`}
@@ -437,6 +510,15 @@ export default function SKUTable({ onPrintItem, onBulkPrint }: SKUTableProps) {
         title="a4-print-frame"
         aria-hidden="true"
       />
+
+      {editingItem && (
+        <EditItemModal
+          item={editingItem}
+          isOpen={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={updateItem}
+        />
+      )}
     </div>
   );
 }

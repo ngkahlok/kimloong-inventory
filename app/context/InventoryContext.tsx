@@ -4,14 +4,20 @@ import { createContext, useContext, useState, useCallback, ReactNode, useEffect 
 import { InventoryItem, FilterState, StockStatus, getStockStatus } from "@/types/inventory";
 import { createClient } from "@/utils/supabase/client";
 
+interface EditingCell {
+  id: string;
+  field: "Stock_Level" | "Price" | "Product_Name" | "Category" | "SKU_ID" | "Barcode_Value";
+  value: string;
+}
+
 interface InventoryContextType {
   items: InventoryItem[];
   isLoading: boolean;
   refreshItems: () => Promise<void>;
   setItems: (items: InventoryItem[]) => void;
   addItems: (newItems: InventoryItem[]) => void;
-  updateItem: (id: string, updates: Partial<InventoryItem>) => void;
-  deleteItem: (id: string) => void;
+  updateItem: (id: string, updates: Partial<InventoryItem>) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
   toggleSelect: (id: string) => void;
   toggleSelectAll: () => void;
   selectedItems: InventoryItem[];
@@ -136,9 +142,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     setFilterState((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  const categories = Array.from(new Set(items.map((i) => i.Category).filter(Boolean)));
+  const itemsToDisplay = items;
+  const categories = Array.from(new Set(itemsToDisplay.map((i) => i.Category).filter(Boolean)));
 
-  const filteredItems = items.filter((item) => {
+  const filteredItems = itemsToDisplay.filter((item) => {
     const searchLower = filter.search.toLowerCase();
     const matchesSearch =
       !filter.search ||
@@ -157,7 +164,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     return matchesSearch && matchesCategory && matchesStock;
   });
 
-  const selectedItems = items.filter((item) => item.selected);
+  const selectedItems = itemsToDisplay.filter((item) => item.selected);
 
   return (
     <InventoryContext.Provider
