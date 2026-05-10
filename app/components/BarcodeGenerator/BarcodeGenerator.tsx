@@ -6,7 +6,7 @@ import styles from "./BarcodeGenerator.module.css";
 
 export default function BarcodeGenerator() {
   const { items } = useInventory();
-  const [selectedId, setSelectedId] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<number>(0);
   const [format, setFormat] = useState<"CODE128" | "CODE39" | "EAN13" | "UPC">("CODE128");
   const [scale, setScale] = useState<number>(2);
   const [showText, setShowText] = useState(true);
@@ -16,8 +16,8 @@ export default function BarcodeGenerator() {
   const [customValue, setCustomValue] = useState("");
   const [useCustom, setUseCustom] = useState(false);
 
-  const selectedItem = items.find((i) => i.id === selectedId);
-  const barcodeValue = useCustom ? customValue : (selectedItem?.Barcode_Value ?? "");
+  const selectedItem = items.find((i) => i.ID === selectedId);
+  const barcodeValue = useCustom ? customValue : (selectedItem?.[ "Item Code" ] ?? "");
 
   const generateBarcode = useCallback(async () => {
     if (!barcodeValue.trim()) return;
@@ -129,24 +129,24 @@ export default function BarcodeGenerator() {
                 id="sku-select"
                 className={styles.select}
                 value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
+                onChange={(e) => setSelectedId(Number(e.target.value))}
               >
-                <option value="">— Choose an item —</option>
+                <option value={0}>— Choose an item —</option>
                 {items.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    [{item.SKU_ID}] {item.Product_Name}
+                  <option key={item.ID} value={item.ID}>
+                    [{item["Item Code"]}] {item.Item}
                   </option>
                 ))}
               </select>
               {selectedItem && (
                 <div className={styles.skuDetails}>
                   <span className={styles.skuDetail}>
-                    <span className={styles.skuDetailLabel}>Barcode:</span>
-                    <span className={styles.skuDetailValue}>{selectedItem.Barcode_Value}</span>
+                    <span className={styles.skuDetailLabel}>Code:</span>
+                    <span className={styles.skuDetailValue}>{selectedItem["Item Code"]}</span>
                   </span>
                   <span className={styles.skuDetail}>
                     <span className={styles.skuDetailLabel}>Price:</span>
-                    <span className={styles.skuDetailValue}>MYR {selectedItem.Price.toFixed(2)}</span>
+                    <span className={styles.skuDetailValue}>MYR {selectedItem.Price?.toFixed(2) ?? "0.00"}</span>
                   </span>
                 </div>
               )}

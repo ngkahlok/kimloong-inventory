@@ -16,26 +16,28 @@ function normalizeRow(row: Record<string, unknown>): InventoryItem | null {
     return undefined;
   };
 
-  const skuId = String(find(["SKU_ID", "SKU ID", "SKUID", "sku_id", "sku", "SKU"]) ?? "").trim();
-  const productName = String(find(["Product_Name", "Product Name", "ProductName", "Name", "product"]) ?? "").trim();
+  const idRaw = find(["ID", "id", "Id"]);
+  const itemCode = String(find(["Item Code", "ItemCode", "Item_Code", "SKU_ID", "SKU ID", "sku", "Code"]) ?? "").trim();
+  const item = String(find(["Item", "Product_Name", "Product Name", "ProductName", "Name", "product"]) ?? "").trim();
   const category = String(find(["Category", "category", "CATEGORY", "Cat"]) ?? "").trim();
-  const stockRaw = find(["Stock_Level", "Stock Level", "StockLevel", "Stock", "Quantity", "Qty"]);
+  const uom = String(find(["UOM", "uom", "Unit", "Unit of Measure"]) ?? "").trim();
+  const costRaw = find(["Cost", "cost", "COST", "Unit Cost", "UnitCost"]);
   const priceRaw = find(["Price", "price", "PRICE", "Unit Price", "UnitPrice"]);
-  const barcodeValue = String(find(["Barcode_Value", "Barcode Value", "BarcodeValue", "Barcode", "barcode", "UPC", "EAN"]) ?? "").trim();
 
-  if (!skuId && !productName) return null;
+  if (!itemCode && !item) return null;
 
-  const stock = typeof stockRaw === "number" ? stockRaw : parseFloat(String(stockRaw ?? "0")) || 0;
+  const id = typeof idRaw === "number" ? idRaw : parseInt(String(idRaw ?? Date.now())) || Date.now();
+  const cost = typeof costRaw === "number" ? costRaw : parseFloat(String(costRaw ?? "0")) || 0;
   const price = typeof priceRaw === "number" ? priceRaw : parseFloat(String(priceRaw ?? "0")) || 0;
 
   return {
-    id: generateId(),
-    SKU_ID: skuId || `SKU-${generateId()}`,
-    Product_Name: productName || "Unknown Product",
+    ID: id,
+    "Item Code": itemCode || `CODE-${id}`,
+    Item: item || "Unknown Item",
     Category: category || "Uncategorized",
-    Stock_Level: Math.max(0, Math.round(stock)),
+    UOM: uom || "PCS",
+    Cost: Math.max(0, cost),
     Price: Math.max(0, price),
-    Barcode_Value: barcodeValue || skuId || generateId(),
     selected: false,
   };
 }
@@ -71,30 +73,22 @@ export async function parseFile(file: File): Promise<InventoryItem[]> {
 }
 
 export function generateSampleData(): InventoryItem[] {
-  const categories = ["Electronics", "Clothing", "Food & Beverage", "Home & Garden", "Sports"];
   const products = [
-    { name: "Wireless Earbuds Pro", cat: "Electronics", barcode: "9781234567897" },
-    { name: "Smart Watch Series 5", cat: "Electronics", barcode: "4006381333931" },
-    { name: "USB-C Hub 7-in-1", cat: "Electronics", barcode: "5901234123457" },
-    { name: "Premium Cotton Tee", cat: "Clothing", barcode: "0712345678906" },
-    { name: "Running Shoes X1", cat: "Clothing", barcode: "5060168790001" },
-    { name: "Denim Jacket Classic", cat: "Clothing", barcode: "4902001413694" },
-    { name: "Organic Green Tea", cat: "Food & Beverage", barcode: "8901234567891" },
-    { name: "Cold Brew Coffee Pack", cat: "Food & Beverage", barcode: "3614272049512" },
-    { name: "Garden Hose 50ft", cat: "Home & Garden", barcode: "0028400064057" },
-    { name: "Indoor Plant Set", cat: "Home & Garden", barcode: "8712566168949" },
-    { name: "Yoga Mat Premium", cat: "Sports", barcode: "9780201379624" },
-    { name: "Resistance Bands Set", cat: "Sports", barcode: "0885176179499" },
+    { code: "E-001", item: "Wireless Earbuds Pro", cat: "Electronics", price: 29.99, cost: 15.00 },
+    { code: "E-002", item: "Smart Watch Series 5", cat: "Electronics", price: 199.99, cost: 120.00 },
+    { code: "C-001", item: "Premium Cotton Tee", cat: "Clothing", price: 24.99, cost: 8.00 },
+    { code: "F-001", item: "Organic Green Tea", cat: "Food & Beverage", price: 14.99, cost: 5.00 },
+    { code: "H-001", item: "Garden Hose 50ft", cat: "Home & Garden", price: 39.99, cost: 20.00 },
   ];
 
   return products.map((p, i) => ({
-    id: generateId(),
-    SKU_ID: `SKU-${String(1001 + i).padStart(4, "0")}`,
-    Product_Name: p.name,
+    ID: 1000 + i,
+    "Item Code": p.code,
+    Item: p.item,
     Category: p.cat,
-    Stock_Level: [0, 5, 8, 25, 42, 100, 3, 15, 0, 7, 200, 50][i] ?? 0,
-    Price: [29.99, 199.99, 49.99, 24.99, 89.99, 129.99, 14.99, 32.99, 39.99, 54.99, 45.99, 22.99][i] ?? 9.99,
-    Barcode_Value: p.barcode,
+    UOM: "PCS",
+    Cost: p.cost,
+    Price: p.price,
     selected: false,
   }));
 }

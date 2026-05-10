@@ -32,7 +32,7 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
 
         try {
           // Try Code128 first (accepts any alphanumeric)
-          JsBarcode(canvas, item.Barcode_Value || item.SKU_ID, {
+          JsBarcode(canvas, item["Item Code"] || String(item.ID), {
             format: "CODE128",
             width: 2,
             height: 50,
@@ -45,7 +45,7 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
           });
         } catch {
           // Fallback to just displaying the value
-          newErrors[item.id] = true;
+          newErrors[String(item.ID)] = true;
         }
       }
 
@@ -93,10 +93,10 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
 
         return `
           <div class="label">
-            <div class="product-name">${escapeHtml(item.Product_Name)}</div>
-            <div class="sku-id">${escapeHtml(item.SKU_ID)}</div>
-            ${barcodeDataUrl ? `<img src="${barcodeDataUrl}" alt="barcode" class="barcode-img" />` : `<div class="barcode-fallback">${escapeHtml(item.Barcode_Value)}</div>`}
-            <div class="price">MYR ${item.Price.toFixed(2)}</div>
+            <div class="product-name">${escapeHtml(item.Item || "")}</div>
+            <div class="sku-id">${escapeHtml(item["Item Code"] || "")}</div>
+            ${barcodeDataUrl ? `<img src="${barcodeDataUrl}" alt="barcode" class="barcode-img" />` : `<div class="barcode-fallback">${escapeHtml(item["Item Code"] || "")}</div>`}
+            <div class="price">MYR ${item.Price?.toFixed(2) ?? "0.00"}</div>
           </div>
         `;
       }).join("");
@@ -295,17 +295,17 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
                 </div>
               ) : (
                 <>
-                  <p className={styles.labelProductName}>{items[currentIndex]?.Product_Name}</p>
-                  <p className={styles.labelSkuId}>{items[currentIndex]?.SKU_ID}</p>
+                  <p className={styles.labelProductName}>{items[currentIndex]?.Item}</p>
+                  <p className={styles.labelSkuId}>{items[currentIndex]?.["Item Code"]}</p>
 
-                  {barcodeErrors[items[currentIndex]?.id] ? (
+                  {barcodeErrors[String(items[currentIndex]?.ID)] ? (
                     <div className={styles.barcodeFallback}>
                       <div className={styles.barcodeLines}>
                         {Array.from({ length: 20 }).map((_, i) => (
                           <div key={i} className={styles.barcodeLine} style={{ height: `${30 + Math.random() * 20}px`, width: `${1 + Math.floor(Math.random() * 2)}px` }} />
                         ))}
                       </div>
-                      <span className={styles.barcodeText}>{items[currentIndex]?.Barcode_Value}</span>
+                      <span className={styles.barcodeText}>{items[currentIndex]?.["Item Code"]}</span>
                     </div>
                   ) : (
                     <canvas
@@ -325,7 +325,7 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
                     )
                   ))}
 
-                  <p className={styles.labelPrice}>MYR {items[currentIndex]?.Price.toFixed(2)}</p>
+                  <p className={styles.labelPrice}>MYR {items[currentIndex]?.Price?.toFixed(2) ?? "0.00"}</p>
                 </>
               )}
             </div>
@@ -344,12 +344,12 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
             <div className={styles.itemListScroll}>
               {items.map((item, i) => (
                 <button
-                  key={item.id}
+                  key={item.ID}
                   className={`${styles.itemChip} ${i === currentIndex ? styles.itemChipActive : ""}`}
                   onClick={() => setCurrentIndex(i)}
                 >
-                  <span className={styles.itemChipSku}>{item.SKU_ID}</span>
-                  <span className={styles.itemChipName}>{item.Product_Name}</span>
+                  <span className={styles.itemChipSku}>{item["Item Code"]}</span>
+                  <span className={styles.itemChipName}>{item.Item}</span>
                 </button>
               ))}
             </div>

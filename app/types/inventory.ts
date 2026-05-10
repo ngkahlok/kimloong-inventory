@@ -1,11 +1,11 @@
 export interface InventoryItem {
-  id: string;
-  SKU_ID: string;
-  Product_Name: string;
-  Category: string;
-  Stock_Level: number;
-  Price: number;
-  Barcode_Value: string;
+  ID: number;
+  "Item Code": string | null;
+  "Category": string | null;
+  "Item": string | null;
+  "UOM": string | null;
+  "Cost": number | null;
+  "Price": number | null;
   selected?: boolean;
 }
 
@@ -14,7 +14,6 @@ export type StockStatus = "all" | "in_stock" | "low_stock" | "out_of_stock";
 export interface FilterState {
   search: string;
   category: string;
-  stockStatus: StockStatus;
 }
 
 export interface PrintJob {

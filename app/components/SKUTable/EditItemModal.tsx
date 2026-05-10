@@ -9,7 +9,7 @@ interface EditItemModalProps {
     item: InventoryItem;
     isOpen: boolean;
     onClose: () => void;
-    onSave: (id: string, updates: Partial<InventoryItem>) => Promise<void>;
+    onSave: (id: number, updates: Partial<InventoryItem>) => Promise<void>;
 }
 
 export default function EditItemModal({ item, isOpen, onClose, onSave }: EditItemModalProps) {
@@ -20,19 +20,20 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
     useEffect(() => {
         if (item) {
             setFormData({
-                SKU_ID: item.SKU_ID || "",
-                Product_Name: item.Product_Name || "",
+                ID: item.ID || 0,
+                "Item Code": item["Item Code"] || "",
                 Category: item.Category || "",
-                Stock_Level: item.Stock_Level ?? 0,
+                Item: item.Item || "",
+                UOM: item.UOM || "",
+                Cost: item.Cost ?? 0,
                 Price: item.Price ?? 0,
-                Barcode_Value: item.Barcode_Value || "",
             });
         }
     }, [item]);
 
     if (!isOpen) return null;
 
-    const isNew = !items.find(i => i.SKU_ID === item.SKU_ID && item.SKU_ID !== "");
+    const isNew = !items.find(i => i.ID === item.ID && item.ID !== 0);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,7 +42,7 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
             if (isNew) {
                 await addItems([formData as InventoryItem]);
             } else {
-                await onSave(item.SKU_ID, formData);
+                await onSave(item.ID, formData);
             }
             onClose();
         } catch (error) {
@@ -74,22 +75,34 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
                 <form onSubmit={handleSubmit}>
                     <div className={styles.body}>
                         <div className={styles.formGroup}>
-                            <label className={styles.label}>SKU ID</label>
+                            <label className={styles.label}>ID</label>
                             <input
+                                type="number"
                                 className={styles.input}
-                                name="SKU_ID"
-                                value={formData.SKU_ID || ""}
+                                name="ID"
+                                value={formData.ID || ""}
                                 onChange={handleChange}
                                 required
                             />
                         </div>
 
                         <div className={styles.formGroup}>
-                            <label className={styles.label}>Product Name</label>
+                            <label className={styles.label}>Item Code</label>
                             <input
                                 className={styles.input}
-                                name="Product_Name"
-                                value={formData.Product_Name || ""}
+                                name="Item Code"
+                                value={formData["Item Code"] || ""}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Item</label>
+                            <input
+                                className={styles.input}
+                                name="Item"
+                                value={formData.Item || ""}
                                 onChange={handleChange}
                                 required
                             />
@@ -107,12 +120,24 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
                         </div>
 
                         <div className={styles.formGroup}>
-                            <label className={styles.label}>Stock Level</label>
+                            <label className={styles.label}>UOM</label>
+                            <input
+                                className={styles.input}
+                                name="UOM"
+                                value={formData.UOM || ""}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Cost (MYR)</label>
                             <input
                                 type="number"
+                                step="0.01"
                                 className={styles.input}
-                                name="Stock_Level"
-                                value={formData.Stock_Level ?? 0}
+                                name="Cost"
+                                value={formData.Cost ?? 0}
                                 onChange={handleChange}
                                 required
                             />
@@ -126,17 +151,6 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
                                 className={styles.input}
                                 name="Price"
                                 value={formData.Price ?? 0}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Barcode Value</label>
-                            <input
-                                className={styles.input}
-                                name="Barcode_Value"
-                                value={formData.Barcode_Value || ""}
                                 onChange={handleChange}
                                 required
                             />

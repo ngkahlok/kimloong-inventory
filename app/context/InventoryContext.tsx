@@ -5,8 +5,8 @@ import { InventoryItem, FilterState, StockStatus, getStockStatus } from "@/types
 import { createClient } from "@/utils/supabase/client";
 
 interface EditingCell {
-  id: string;
-  field: "Stock_Level" | "Price" | "Product_Name" | "Category" | "SKU_ID" | "Barcode_Value";
+  id: number;
+  field: keyof InventoryItem;
   value: string;
 }
 
@@ -16,9 +16,9 @@ interface InventoryContextType {
   refreshItems: () => Promise<void>;
   setItems: (items: InventoryItem[]) => void;
   addItems: (newItems: InventoryItem[]) => void;
-  updateItem: (id: string, updates: Partial<InventoryItem>) => Promise<void>;
-  deleteItem: (id: string) => Promise<void>;
-  toggleSelect: (id: string) => void;
+  updateItem: (id: number, updates: Partial<InventoryItem>) => Promise<void>;
+  deleteItem: (id: number) => Promise<void>;
+  toggleSelect: (id: number) => void;
   toggleSelectAll: () => void;
   selectedItems: InventoryItem[];
   filter: FilterState;
@@ -35,7 +35,6 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const [filter, setFilterState] = useState<FilterState>({
     search: "",
     category: "all",
-    stockStatus: "all",
   });
 
   const supabase = createClient();
@@ -45,9 +44,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     console.log("Fetching items from Supabase...");
     try {
       const { data, error } = await supabase
-        .from("inventory")
+        .from("sku")
         .select("*")
-        .order("SKU_ID", { ascending: true });
+        .order("Item Code", { ascending: true })
+        .range(0, 3500);
 
       if (error) {
         console.error("Supabase Error:", error.message, error.details, error.hint);
@@ -77,8 +77,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       const itemsToUpload = newItems.map(({ selected, ...rest }) => rest);
 
       const { error } = await supabase
-        .from("inventory")
-        .upsert(itemsToUpload, { onConflict: "SKU_ID" });
+        .from("sku")
+        .upsert(itemsToUpload, { onConflict: "ID" });
 
       if (error) throw error;
 
@@ -90,15 +90,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     }
   }, [supabase, refreshItems]);
 
-  const updateItem = useCallback(async (id: string, updates: Partial<InventoryItem>) => {
+  const updateItem = useCallback(async (id: number, updates: Partial<InventoryItem>) => {
     try {
       // Remove selected from updates if it exists
       const { selected, ...dbUpdates } = updates as any;
 
       const { error } = await supabase
-        .from("inventory")
+        .from("sku")
         .update(dbUpdates)
-        .eq("SKU_ID", id);
+        .eq("ID", id);
 
       if (error) throw error;
 
@@ -108,12 +108,12 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     }
   }, [supabase, refreshItems]);
 
-  const deleteItem = useCallback(async (id: string) => {
+  const deleteItem = useCallback(async (id: number) => {
     try {
       const { error } = await supabase
-        .from("inventory")
+        .from("sku")
         .delete()
-        .eq("SKU_ID", id);
+        .eq("ID", id);
 
       if (error) throw error;
 
@@ -123,10 +123,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     }
   }, [supabase, refreshItems]);
 
-  const toggleSelect = useCallback((id: string) => {
+  const toggleSelect = useCallback((id: number) => {
     setItemsState((prev) =>
       prev.map((item) =>
-        item.SKU_ID === id ? { ...item, selected: !item.selected } : item
+        item.ID === id ? { ...item, selected: !item.selected } : item
       )
     );
   }, []);
@@ -143,25 +143,21 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const itemsToDisplay = items;
-  const categories = Array.from(new Set(itemsToDisplay.map((i) => i.Category).filter(Boolean)));
+  const categories = Array.from(new Set(itemsToDisplay.map((i) => i.Category).filter((c): c is string => !!c)));
 
   const filteredItems = itemsToDisplay.filter((item) => {
     const searchLower = filter.search.toLowerCase();
     const matchesSearch =
       !filter.search ||
-      String(item.SKU_ID || "").toLowerCase().includes(searchLower) ||
-      String(item.Product_Name || "").toLowerCase().includes(searchLower) ||
-      String(item.Category || "").toLowerCase().includes(searchLower) ||
-      String(item.Barcode_Value || "").toLowerCase().includes(searchLower);
+      String(item.ID || "").toLowerCase().includes(searchLower) ||
+      String(item["Item Code"] || "").toLowerCase().includes(searchLower) ||
+      String(item.Item || "").toLowerCase().includes(searchLower) ||
+      String(item.Category || "").toLowerCase().includes(searchLower);
 
     const matchesCategory =
       filter.category === "all" || item.Category === filter.category;
 
-    const stockStatus = getStockStatus(item.Stock_Level);
-    const matchesStock =
-      filter.stockStatus === "all" || stockStatus === filter.stockStatus;
-
-    return matchesSearch && matchesCategory && matchesStock;
+    return matchesSearch && matchesCategory;
   });
 
   const selectedItems = itemsToDisplay.filter((item) => item.selected);

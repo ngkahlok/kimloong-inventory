@@ -44,7 +44,7 @@ export async function exportAllBarcodesA4(
 
   for (const item of items) {
     try {
-      JsBarcode(tempCanvas, item.Barcode_Value || item.SKU_ID, {
+      JsBarcode(tempCanvas, item["Item Code"] || String(item.ID), {
         format: "CODE128",
         width: 2,
         height: 56,
@@ -55,61 +55,73 @@ export async function exportAllBarcodesA4(
         background: "#ffffff",
         lineColor: "#000000",
       });
-      barcodeMap.set(item.id, tempCanvas.toDataURL("image/png"));
+      barcodeMap.set(String(item.ID), tempCanvas.toDataURL("image/png"));
     } catch {
       // If barcode generation fails (e.g. EAN requires specific length), skip image
-      barcodeMap.set(item.id, "");
+      barcodeMap.set(String(item.ID), "");
     }
   }
 
   // Build label HTML for a single item
   function renderLabel(item: InventoryItem): string {
-    const barcodeImg = barcodeMap.get(item.id) ?? "";
+    const barcodeImg = barcodeMap.get(String(item.ID)) ?? "";
     const barcodeEl = barcodeImg
       ? `<img src="${barcodeImg}" alt="barcode" class="barcode-img" />`
-      : `<div class="barcode-text-fallback">${escapeHtml(item.Barcode_Value || item.SKU_ID)}</div>`;
+      : `<div class="barcode-text-fallback">${escapeHtml(item["Item Code"] || String(item.ID))}</div>`;
 
     return `
       <div class="label">
-        <div class="label-name">${escapeHtml(item.Product_Name)}</div>
-        <div class="label-sku">${escapeHtml(item.SKU_ID)}</div>
+        <div class="label-name">${escapeHtml(item.Item || "")}</div>
+        <div class="label-sku">${escapeHtml(item["Item Code"] || "")}</div>
         ${barcodeEl}
-        <div class="label-price">MYR ${item.Price.toFixed(2)}</div>
+        <div class="label-price">MYR ${item.Price?.toFixed(2) ?? "0.00"}</div>
       </div>
     `;
   }
 
-  // Build pages: one per category
-  const pages = sortedCategories.map((cat, catIdx) => {
+  // Build pages: chunk items by category, then chunk category items into pages of 6 rows (12 items)
+  const pagesHtml: string[] = [];
+
+  for (const cat of sortedCategories) {
     const catItems = grouped.get(cat)!;
-    // Pair items into rows of 2
-    const rows: InventoryItem[][] = [];
-    for (let i = 0; i < catItems.length; i += 2) {
-      rows.push(catItems.slice(i, i + 2));
+    const ITEMS_PER_PAGE = 12; // 6 rows * 2 columns
+
+    for (let i = 0; i < catItems.length; i += ITEMS_PER_PAGE) {
+      const pageItems = catItems.slice(i, i + ITEMS_PER_PAGE);
+      
+      // Pair items into rows of 2
+      const rows: InventoryItem[][] = [];
+      for (let j = 0; j < pageItems.length; j += 2) {
+        rows.push(pageItems.slice(j, j + 2));
+      }
+
+      const rowsHtml = rows
+        .map(
+          (row) => `
+          <div class="row">
+            ${row.map(renderLabel).join("")}
+            ${row.length === 1 ? `<div class="label label-empty"></div>` : ""}
+          </div>
+        `
+        )
+        .join("");
+
+      const isFirstOfCategory = i === 0;
+      const isLastOfAll = cat === sortedCategories[sortedCategories.length - 1] && (i + ITEMS_PER_PAGE >= catItems.length);
+      const pageNum = Math.floor(i / ITEMS_PER_PAGE) + 1;
+      const totalPageForCat = Math.ceil(catItems.length / ITEMS_PER_PAGE);
+
+      pagesHtml.push(`
+        <div class="page${isLastOfAll ? "" : " page-break"}">
+          <div class="page-header">
+            <div class="page-header-category">${escapeHtml(cat)} ${totalPageForCat > 1 ? `<span style="font-size: 0.7em; font-weight: normal;">(Part ${pageNum}/${totalPageForCat})</span>` : ""}</div>
+            <div class="page-header-count">${pageItems.length} label${pageItems.length !== 1 ? "s" : ""} on this page</div>
+          </div>
+          <div class="labels-grid">${rowsHtml}</div>
+        </div>
+      `);
     }
-
-    const rowsHtml = rows
-      .map(
-        (row) => `
-        <div class="row">
-          ${row.map(renderLabel).join("")}
-          ${row.length === 1 ? `<div class="label label-empty"></div>` : ""}
-        </div>
-      `
-      )
-      .join("");
-
-    const isLastPage = catIdx === sortedCategories.length - 1;
-    return `
-      <div class="page${isLastPage ? "" : " page-break"}">
-        <div class="page-header">
-          <div class="page-header-category">${escapeHtml(cat)}</div>
-          <div class="page-header-count">${catItems.length} item${catItems.length !== 1 ? "s" : ""}</div>
-        </div>
-        <div class="labels-grid">${rowsHtml}</div>
-      </div>
-    `;
-  });
+  }
 
   const totalItems = items.length;
   const totalCategories = sortedCategories.length;
@@ -177,7 +189,6 @@ export async function exportAllBarcodesA4(
 
     /* ── Grid layout ── */
     .labels-grid {
-      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 3mm;
@@ -191,6 +202,7 @@ export async function exportAllBarcodesA4(
     /* ── Individual label ── */
     .label {
       flex: 1;
+      height: 38mm; /* Fixed height for 6 rows per page */
       border: 1px solid #ccc;
       border-radius: 3px;
       padding: 2.5mm 3mm;
@@ -262,7 +274,7 @@ export async function exportAllBarcodesA4(
   </style>
 </head>
 <body>
-  ${pages.join("")}
+  ${pagesHtml.join("")}
 </body>
 </html>`;
 
