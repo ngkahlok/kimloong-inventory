@@ -75,7 +75,7 @@ export default function BarcodeModal({ items, onClose }: BarcodeModalProps) {
         const tempCanvas = document.createElement("canvas");
         let barcodeDataUrl = "";
         try {
-          JsBarcode(tempCanvas, item.Barcode_Value || item.SKU_ID, {
+          JsBarcode(tempCanvas, item["Item Code"] || String(item.ID), {
             format: "CODE128",
             width: 2,
             height: 50,
