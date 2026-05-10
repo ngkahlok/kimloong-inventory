@@ -17,7 +17,7 @@ export default function BarcodeGenerator() {
   const [useCustom, setUseCustom] = useState(false);
 
   const selectedItem = items.find((i) => i.ID === selectedId);
-  const barcodeValue = useCustom ? customValue : (selectedItem?.[ "Item Code" ] ?? "");
+  const barcodeValue = useCustom ? customValue : (selectedItem?.["Item Code"] ?? "");
 
   const generateBarcode = useCallback(async () => {
     if (!barcodeValue.trim()) return;
@@ -66,7 +66,7 @@ export default function BarcodeGenerator() {
     if (barcodeValue) {
       generateBarcode();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, format, scale, showText]);
 
   if (items.length === 0) {

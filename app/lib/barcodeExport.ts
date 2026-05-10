@@ -88,7 +88,7 @@ export async function exportAllBarcodesA4(
 
     for (let i = 0; i < catItems.length; i += ITEMS_PER_PAGE) {
       const pageItems = catItems.slice(i, i + ITEMS_PER_PAGE);
-      
+
       // Pair items into rows of 2
       const rows: InventoryItem[][] = [];
       for (let j = 0; j < pageItems.length; j += 2) {
