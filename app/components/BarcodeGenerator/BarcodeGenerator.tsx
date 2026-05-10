@@ -256,7 +256,7 @@ export default function BarcodeGenerator() {
         <div className={styles.preview}>
           <div className={styles.previewHeader}>
             <span className={styles.previewTitle}>Preview</span>
-            {selectedItem && <span className={styles.previewItem}>{selectedItem.Product_Name}</span>}
+            {selectedItem && <span className={styles.previewItem}>{selectedItem.Item}</span>}
           </div>
           <div className={styles.previewCanvas}>
             {!barcodeValue && !generating ? (
